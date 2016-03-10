@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
 
         if (networkInfo != null) {
+            initViewAndSetupData();
             mProgressDialog = new ProgressDialog(MainActivity.this);
             mProgressDialog.setMessage("Please wait...");
             mProgressDialog.setCancelable(false);
@@ -106,7 +107,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.v(TAG, "JSONArray: " + response.toString());
                 try {
                     parseJSONResponse(response);
-                    initViewAndSetupData();
+                    int curSize = 0;
+                    if (mAdapter != null) {
+                        curSize = mAdapter.getItemCount();
+                    }
+                    if (mAdapter != null) {
+                        mAdapter.notifyItemRangeInserted(curSize, mResponseJSONUtils.getItemList().size() - 1);
+                    }
                 } catch (JSONException e) {
                     Log.w(TAG, "parseJSONResponse has JSONException: " + e);
                 } finally {
@@ -147,10 +154,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void parseJSONResponse(JSONArray response) throws JSONException {
         int count = response.length();
-        int curSize = 0;
-        if (mAdapter != null) {
-            curSize = mAdapter.getItemCount();
-        }
         for (int i = 0; i < count; i++) {
             JSONObject resultObject = response.getJSONObject(i);
             String id = resultObject.getString(ResponseJSONUtils.JSON_KEY_ID);
@@ -166,9 +169,6 @@ public class MainActivity extends AppCompatActivity {
                     ", sender: " + sender + ", note: " + note +
                     ", recipient: " + recipient + ", amount: " + amount + ", currency: " + currency);
             mResponseJSONUtils.newItem(id, created, sender, note, recipient, amount, currency);
-        }
-        if (mAdapter != null) {
-            mAdapter.notifyItemRangeInserted(curSize, mResponseJSONUtils.getItemList().size() - 1);
         }
     }
 

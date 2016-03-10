@@ -31,24 +31,21 @@ public class MainActivity extends AppCompatActivity {
 
     final String TAG = "MainActivity+Amanda";
 
-    int START_INDEX_DEFAULT_VALUE = 0;
-    String NUM_DEFAULT_VALUE = "10";
+    static String NUM_DEFAULT_VALUE = "10";
 
     RequestQueue mRequestQueue;
     JsonArrayRequest mJsonArrayRequest;
     final String mRequestURL = "https://hook.io/syshen/infinite-list/";
     String mContentType = "application/json";
-
     ResponseJSONUtils mResponseJSONUtils = new ResponseJSONUtils();
-    ProgressDialog mProgressDialog;
 
+    ProgressDialog mProgressDialog;
     ResponseJSONCodeAdapter mAdapter = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
@@ -58,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
             mProgressDialog.setMessage("Please wait...");
             mProgressDialog.setCancelable(false);
             mProgressDialog.show();
-            startQuery(START_INDEX_DEFAULT_VALUE);
+            startQuery(0);
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setMessage("No network connection...");
@@ -80,9 +77,6 @@ public class MainActivity extends AppCompatActivity {
         JSONArray jsonRequest = new JSONArray();
 
         ////////
-        if (mResponseJSONUtils != null && mResponseJSONUtils.getItemList() != null) {
-            startIndex = mResponseJSONUtils.getItemList().size();
-        }
         String requestURL = mRequestURL + "?startIndex=" + String.valueOf(startIndex) + "&num=" + NUM_DEFAULT_VALUE;
         ////////
 
@@ -95,14 +89,13 @@ public class MainActivity extends AppCompatActivity {
 //                params.put("num", NUM_DEFAULT_VALUE);
 //                return params;
 //            }
-
             public String getBodyContentType() {
                 return mContentType;
             }
         };
 
-        mRequestQueue.add(mJsonArrayRequest);
         Log.v(TAG, "mJsonArrayRequest: " + mJsonArrayRequest);
+        mRequestQueue.add(mJsonArrayRequest);
     }
 
 
@@ -116,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
                     initViewAndSetupData();
                 } catch (JSONException e) {
                     Log.w(TAG, "parseJSONResponse has JSONException: " + e);
+                } finally {
+                    dismissProgressDialog();
                 }
             }
         }
@@ -133,21 +128,20 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
-        mAdapter = new ResponseJSONCodeAdapter(MainActivity.this);
+        mAdapter = new ResponseJSONCodeAdapter(this);
         recyclerView.setOnScrollListener(new InfiniteScrollingListener(linearLayoutManager) {
             @Override
-            public void onLoadMore(int page, int totalItemsCount) {
-                loadMoreData();
+            public void onLoadMore(int page, final int totalItemsCount) {
+                loadMoreData(totalItemsCount);
             }
         });
         recyclerView.setAdapter(mAdapter);
-        dismissProgressDialog();
     }
 
     // Append more data into the adapter
-    public void loadMoreData() {
+    public void loadMoreData(int totalItemsCount) {
         if (mResponseJSONUtils.getItemList() != null) {
-            startQuery(mResponseJSONUtils.getItemList().size());
+            startQuery(totalItemsCount);
         }
     }
 

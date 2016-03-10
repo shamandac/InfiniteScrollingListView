@@ -48,8 +48,24 @@ public class ResponseJSONUtils {
         return mItemList.get(index);
     }
 
+    public boolean removeItemFromList(int index) {
+        if (index >= 0 && index < getItemListSize()) {
+            mItemList.remove(index);
+            return true;
+        }
+        return false;
+    }
+
     public ArrayList<ItemInfo> getItemList() {
         return mItemList;
     }
+
+    public int getItemListSize() {
+        if (mItemList != null) {
+            return mItemList.size();
+        }
+        return 0;
+    }
+
 
 }

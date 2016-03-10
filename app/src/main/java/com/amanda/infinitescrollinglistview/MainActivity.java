@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -31,9 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
     final String TAG = "MainActivity+Amanda";
 
+    RequestQueue mRequestQueue;
+    JSONArray mJsonRequest = new JSONArray();
+
     static String NUM_DEFAULT_VALUE = "10";
 
-    RequestQueue mRequestQueue;
     JsonArrayRequest mJsonArrayRequest;
     final String mRequestURL = "https://hook.io/syshen/infinite-list/";
     String mContentType = "application/json";
@@ -51,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
 
         if (networkInfo != null) {
-            initViewAndSetupData();
+            mRequestQueue = Volley.newRequestQueue(this);
+            initViewAndAdapter();
             mProgressDialog = new ProgressDialog(MainActivity.this);
             mProgressDialog.setMessage("Please wait...");
             mProgressDialog.setCancelable(false);
@@ -74,46 +79,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void startQuery(int startIndex) {
-        mRequestQueue = Volley.newRequestQueue(this);
-        JSONArray jsonRequest = new JSONArray();
-
-        ////////
         String requestURL = mRequestURL + "?startIndex=" + String.valueOf(startIndex) + "&num=" + NUM_DEFAULT_VALUE;
-        ////////
-
-        mJsonArrayRequest = new JsonArrayRequest(Request.Method.POST, requestURL, jsonRequest, mJSONResponseListener, mErrorListener) {
-            //TODO: why doesn't work??
-//            @Override
-//            protected Map<String, String> getParams() {
-//                Map<String, String> params = new HashMap<String, String>();
-//                params.put("startIndex", String.valueOf(startIndex));
-//                params.put("num", NUM_DEFAULT_VALUE);
-//                return params;
-//            }
+        mJsonArrayRequest = new JsonArrayRequest(Request.Method.POST, requestURL, mJsonRequest, mJSONResponseListener, mErrorListener) {
             public String getBodyContentType() {
                 return mContentType;
             }
         };
-
         Log.v(TAG, "mJsonArrayRequest: " + mJsonArrayRequest);
         mRequestQueue.add(mJsonArrayRequest);
     }
 
-
     Response.Listener<JSONArray> mJSONResponseListener = new Response.Listener<JSONArray>() {
         @Override
-        public void onResponse(JSONArray response) {
+        public void onResponse(final JSONArray response) {
             if (response != null) {
                 Log.v(TAG, "JSONArray: " + response.toString());
                 try {
-                    parseJSONResponse(response);
-                    int curSize = 0;
-                    if (mAdapter != null) {
-                        curSize = mAdapter.getItemCount();
-                    }
-                    if (mAdapter != null) {
-                        mAdapter.notifyItemRangeInserted(curSize, mResponseJSONUtils.getItemList().size() - 1);
-                    }
+                    parseJSONResponseAndSetupData(response);
+                    refreshView();
                 } catch (JSONException e) {
                     Log.w(TAG, "parseJSONResponse has JSONException: " + e);
                 } finally {
@@ -131,28 +114,42 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void initViewAndSetupData() {
+    private void initViewAndAdapter() {
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
-        mAdapter = new ResponseJSONCodeAdapter(this);
-        recyclerView.setOnScrollListener(new InfiniteScrollingListener(linearLayoutManager) {
+        mAdapter = new ResponseJSONCodeAdapter(this, recyclerView);
+
+        recyclerView.setAdapter(mAdapter);
+        mAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
-            public void onLoadMore(int page, final int totalItemsCount) {
-                loadMoreData(totalItemsCount);
+            public void onLoadMore() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // add progress item
+                        if (mResponseJSONUtils.getItemList() != null) {
+                            mResponseJSONUtils.getItemList().add(null);
+                            mAdapter.notifyItemInserted(mResponseJSONUtils.getItemListSize() - 1);
+                        }
+                        loadMoreData(mResponseJSONUtils.getItemListSize() - 1);
+                        mAdapter.setLoaded();
+                    }
+                }, 2000);
             }
         });
-        recyclerView.setAdapter(mAdapter);
     }
 
     // Append more data into the adapter
     public void loadMoreData(int totalItemsCount) {
-        if (mResponseJSONUtils.getItemList() != null) {
-            startQuery(totalItemsCount);
-        }
+        startQuery(totalItemsCount);
     }
 
-    private void parseJSONResponse(JSONArray response) throws JSONException {
+    private void parseJSONResponseAndSetupData(JSONArray response) throws JSONException {
+        //  remove progress item
+        if (mResponseJSONUtils.removeItemFromList(mResponseJSONUtils.getItemListSize() - 1)) {
+            mAdapter.notifyItemRemoved(mResponseJSONUtils.getItemListSize());
+        }
         int count = response.length();
         for (int i = 0; i < count; i++) {
             JSONObject resultObject = response.getJSONObject(i);
@@ -172,54 +169,101 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void refreshView() {
+        int curSize = 0;
+        if (mAdapter != null) {
+            curSize = mAdapter.getItemCount();
+        }
+        if (mAdapter != null) {
+            mAdapter.notifyItemRangeInserted(curSize, mResponseJSONUtils.getItemList().size() - 1);
+        }
+    }
+
     private class ResponseJSONCodeAdapter extends RecyclerView.Adapter {
 
         LayoutInflater inflater;
+        private final int VIEW_ITEM = 0;
+        private final int VIEW_PROG = 1;
 
-        public ResponseJSONCodeAdapter(Context context) {
+        private int visibleThreshold = 3;
+        private int lastVisibleItem, totalItemCount;
+        private boolean loading;
+        private OnLoadMoreListener onLoadMoreListener;
+
+        public ResponseJSONCodeAdapter(Context context, RecyclerView recyclerView) {
             inflater = LayoutInflater.from(context);
+
+            if (recyclerView.getLayoutManager() instanceof LinearLayoutManager) {
+                final LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                        super.onScrolled(recyclerView, dx, dy);
+                        totalItemCount = linearLayoutManager.getItemCount();
+                        lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+                        if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                            if (onLoadMoreListener != null) {
+                                onLoadMoreListener.onLoadMore();
+                            }
+                            loading = true;
+                        }
+                    }
+                });
+            }
         }
 
         @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-            View itemLayoutView = inflater.inflate(R.layout.item_layout, viewGroup, false);
-            MyViewHolder myViewHolder = new MyViewHolder(itemLayoutView);
-            return myViewHolder;
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+            RecyclerView.ViewHolder viewHolder;
+            if (viewType == VIEW_ITEM) {
+                View itemLayoutView = inflater.inflate(R.layout.item_layout, viewGroup, false);
+                viewHolder = new MyViewHolder(itemLayoutView);
+            } else {
+                View itemLayoutView = inflater.inflate(R.layout.progressbar_item, viewGroup, false);
+                viewHolder = new ProgressViewHolder(itemLayoutView);
+            }
+            return viewHolder;
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-            MyViewHolder myViewHolder = null;
-            ResponseJSONUtils.ItemInfo itemInfo = null;
-            if (mResponseJSONUtils != null && position < getItemCount()) {
-                itemInfo = mResponseJSONUtils.getItemFromList(position);
-            }
             if (viewHolder != null && viewHolder instanceof MyViewHolder) {
-                myViewHolder = (MyViewHolder) viewHolder;
+                ResponseJSONUtils.ItemInfo itemInfo = null;
+                if (mResponseJSONUtils != null && position < getItemCount()) {
+                    itemInfo = mResponseJSONUtils.getItemFromList(position);
+                }
+                if (itemInfo != null) {
+                    if (((MyViewHolder) viewHolder).idTextView != null) {
+                        ((MyViewHolder) viewHolder).idTextView.setText(itemInfo.id);
+                    }
+                    if (((MyViewHolder) viewHolder).createdTextView != null) {
+                        ((MyViewHolder) viewHolder).createdTextView.setText(itemInfo.created);
+                    }
+                    if (((MyViewHolder) viewHolder).senderTextView != null) {
+                        ((MyViewHolder) viewHolder).senderTextView.setText(itemInfo.sender);
+                    }
+                    if (((MyViewHolder) viewHolder).noteTextView != null) {
+                        ((MyViewHolder) viewHolder).noteTextView.setText(itemInfo.note);
+                    }
+                    if (((MyViewHolder) viewHolder).recipientTextView != null) {
+                        ((MyViewHolder) viewHolder).recipientTextView.setText(itemInfo.recipient);
+                    }
+                    if (((MyViewHolder) viewHolder).amountTextView != null) {
+                        ((MyViewHolder) viewHolder).amountTextView.setText(itemInfo.amount);
+                    }
+                    if (((MyViewHolder) viewHolder).currencyTextView != null) {
+                        ((MyViewHolder) viewHolder).currencyTextView.setText(itemInfo.currency);
+                    }
+                }
+            } else if (viewHolder != null && viewHolder instanceof ProgressViewHolder) {
+                ((ProgressViewHolder) viewHolder).progressItem.setIndeterminate(true);
             }
-            if (myViewHolder != null && itemInfo != null) {
-                if (myViewHolder.idTextView != null) {
-                    myViewHolder.idTextView.setText(itemInfo.id);
-                }
-                if (myViewHolder.createdTextView != null) {
-                    myViewHolder.createdTextView.setText(itemInfo.created);
-                }
-                if (myViewHolder.senderTextView != null) {
-                    myViewHolder.senderTextView.setText(itemInfo.sender);
-                }
-                if (myViewHolder.noteTextView != null) {
-                    myViewHolder.noteTextView.setText(itemInfo.note);
-                }
-                if (myViewHolder.recipientTextView != null) {
-                    myViewHolder.recipientTextView.setText(itemInfo.recipient);
-                }
-                if (myViewHolder.amountTextView != null) {
-                    myViewHolder.amountTextView.setText(itemInfo.amount);
-                }
-                if (myViewHolder.currencyTextView != null) {
-                    myViewHolder.currencyTextView.setText(itemInfo.currency);
-                }
-            }
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            int type = mResponseJSONUtils.getItemFromList(position) != null ? VIEW_ITEM : VIEW_PROG;
+            return type;
         }
 
         @Override
@@ -229,10 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            if (mResponseJSONUtils != null && mResponseJSONUtils.getItemList() != null) {
-                return mResponseJSONUtils.getItemList().size();
-            }
-            return 0;
+            return mResponseJSONUtils.getItemListSize();
         }
 
         class MyViewHolder extends RecyclerView.ViewHolder {
@@ -254,6 +295,23 @@ public class MainActivity extends AppCompatActivity {
                 amountTextView = (TextView) itemView.findViewById(R.id.amount);
                 currencyTextView = (TextView) itemView.findViewById(R.id.currency);
             }
+        }
+
+        class ProgressViewHolder extends RecyclerView.ViewHolder {
+            ProgressBar progressItem;
+
+            public ProgressViewHolder(View itemView) {
+                super(itemView);
+                progressItem = (ProgressBar) itemView.findViewById(R.id.progressItem);
+            }
+        }
+
+        public void setLoaded() {
+            loading = false;
+        }
+
+        public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+            this.onLoadMoreListener = onLoadMoreListener;
         }
     }
 

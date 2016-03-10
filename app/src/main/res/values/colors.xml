@@ -3,9 +3,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="colorDarkTitle">#455a64</color>
-    <color name="colorTitle">#607d8b</color>
-    <color name="colorSubTitle">#78909c</color>
-    <color name="colorContent">#eceff1</color>
-    <color name="colorDivider">#455a64</color>
+    <color name="colorDarkTitle">#607d8b</color>
+    <color name="colorTitle">#78909c</color>
+    <color name="colorSubTitle">#b0bec5</color>
+    <color name="colorContent">#c5cae9</color>
+    <color name="colorDivider">#eceff1</color>
+    <color name="colorId">#880e4f</color>
 </resources>

@@ -3,9 +3,9 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
-    <dimen name="config_textview_width">80dp</dimen>
+    <dimen name="textview_width">80dp</dimen>
     <dimen name="common_margin_l">10dp</dimen>
     <dimen name="common_margin_m">8dp</dimen>
     <dimen name="common_margin_s">5dp</dimen>
-
+    <dimen name="common_margin_divider">1dp</dimen>
 </resources>

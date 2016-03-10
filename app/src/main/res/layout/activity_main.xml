@@ -10,70 +10,9 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/configLayout"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="@dimen/config_textview_width"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginRight="@dimen/common_margin_l"
-                    android:text="startIndex" />
-
-                <EditText
-                    android:id="@+id/startIndexEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:numeric="signed" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="@dimen/config_textview_width"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginRight="@dimen/common_margin_l"
-                    android:text="num" />
-
-                <EditText
-                    android:id="@+id/numEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:numeric="integer" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/queryBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="@dimen/common_margin_l"
-            android:text="query" />
-    </LinearLayout>
-
-    <ListView
-        android:id="@+id/mainListView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/configLayout" />
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

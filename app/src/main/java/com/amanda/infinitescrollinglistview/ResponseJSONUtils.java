@@ -14,7 +14,7 @@ public class ResponseJSONUtils {
 
     final static String JSON_KEY_SENDER = "sender";
     final static String JSON_KEY_NOTE = "note";
-    final static String JSON_KEY_RECIPINET = "recipient";
+    final static String JSON_KEY_RECIPIENT = "recipient";
     final static String JSON_KEY_AMOUNT = "amount";
     final static String JSON_KEY_CURRENCY = "currency";
 
@@ -52,9 +52,4 @@ public class ResponseJSONUtils {
         return mItemList;
     }
 
-    public void cleanItemList() {
-        if (mItemList != null) {
-            mItemList.clear();
-        }
-    }
 }

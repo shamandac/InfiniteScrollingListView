@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                         loadMoreData(mResponseJSONUtils.getItemListSize() - 1);
                         mAdapter.setLoaded();
                     }
-                }, 2000);
+                }, 3000);
             }
         });
     }
@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         private final int VIEW_ITEM = 0;
         private final int VIEW_PROG = 1;
 
-        private int visibleThreshold = 3;
+        private int visibleThreshold = 12;
         private int lastVisibleItem, totalItemCount;
         private boolean loading;
         private OnLoadMoreListener onLoadMoreListener;

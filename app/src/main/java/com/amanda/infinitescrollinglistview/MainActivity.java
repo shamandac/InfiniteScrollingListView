@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
 //                            mCurrentCount++;
 //                            mAdapter.notifyItemInserted(mCurrentCount - 1);
 //                        }
-                        loadMoreData(mCurrentCount - 1);
+                        loadMoreData(mCurrentCount);
                         mAdapter.setLoaded();
                     }
                 }, 3000);
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         isLoadNew = false;
-                        int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) - Integer.parseInt(NUM_FETCH_VALUE) + 1;
+                        int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1;
                         if (index < 0) {
                             index = 0;
                         }
@@ -173,22 +173,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void removeLegacyData(int index) {
-        Log.v(TAG, "removeLegacyData index: " + index);
-        mRemoveIndex = index;
-        int count = 0;
-        for (int i = index - Integer.parseInt(NUM_FETCH_VALUE); i >= 0; i--) {
+        mRemoveIndex = index - Integer.parseInt(NUM_FETCH_VALUE);
+        Log.v(TAG, "removeLegacyData mRemoveIndex: " + mRemoveIndex);
+        for (int i = mRemoveIndex; i >= 0; i--) {
             mResponseJSONUtils.removeItemFromList(i);
-            count++;
         }
         Log.v(TAG, "removeLegacyData size: " + mResponseJSONUtils.getItemListSize());
     }
 
     private void removeNewData(int index) {
         Log.v(TAG, "removeNewData index: " + index);
-        for (int i = index; i >= mRemoveIndex; i--) {
+        for (int i = index; i <= index + 10; i++) {
             mResponseJSONUtils.removeItemFromList(i);
-            mCurrentCount = i;
         }
+        mAdapter.notifyDataSetChanged();
+        mCurrentCount = index;
         Log.v(TAG, "removeNewData size: " + mResponseJSONUtils.getItemListSize());
     }
 
@@ -229,13 +228,13 @@ public class MainActivity extends AppCompatActivity {
             removeLegacyData(mAdapter.lastVisibleItem);
         } else {
             if (mAdapter != null) {
-                int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) - Integer.parseInt(NUM_FETCH_VALUE) + 1;
+                int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1;
                 if (index < 0) {
                     index = 0;
                 }
                 mAdapter.notifyItemRangeChanged(index, Integer.parseInt(NUM_FETCH_VALUE));
             }
-            removeNewData(mAdapter.lastVisibleItem + Integer.parseInt(NUM_FETCH_VALUE));
+            removeNewData(mAdapter.lastVisibleItem);
         }
     }
 
@@ -262,14 +261,14 @@ public class MainActivity extends AppCompatActivity {
                         totalItemCount = linearLayoutManager.getItemCount();
                         lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                         firstVisibleItem = linearLayoutManager.findFirstVisibleItemPosition();
-                        Log.v(TAG, "totalItemCount: " + totalItemCount + ", lastVisibleItem: " + lastVisibleItem);
-                        Log.v(TAG, "firstVisibleItem: " + firstVisibleItem + ", mRemoveIndex: " + mRemoveIndex);
+//                        Log.v(TAG, "totalItemCount: " + totalItemCount + ", lastVisibleItem: " + lastVisibleItem);
+//                        Log.v(TAG, "firstVisibleItem: " + firstVisibleItem + ", mRemoveIndex: " + mRemoveIndex);
                         if (!loading && lastVisibleItem + 1 >= totalItemCount) {//totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                             if (onLoadMoreListener != null) {
                                 onLoadMoreListener.onLoadMore();
                             }
                             loading = true;
-                        } else if (!loading && firstVisibleItem > 0 && firstVisibleItem <= mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1) {
+                        } else if (!loading && firstVisibleItem > 0 && firstVisibleItem <= mRemoveIndex) {
                             if (onLoadLegacyListener != null) {
                                 onLoadLegacyListener.onLoadLegacy();
                             }
@@ -295,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-            Log.v(TAG, "viewHolder: " + viewHolder);
+//            Log.v(TAG, "viewHolder: " + viewHolder);
             if (viewHolder != null && viewHolder instanceof MyViewHolder) {
                 ResponseJSONUtils.ItemInfo itemInfo = null;
                 Log.v(TAG, "position: " + position + ", getItemCount: " + getItemCount() + ", size: " + mResponseJSONUtils.getItemListSize());

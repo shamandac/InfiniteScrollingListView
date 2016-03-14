@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     int mCurrentCount = 0;
     int mRemoveIndex = 0;
+    int mLastItemIndex = 0;
     boolean isLoadNew = true;
 
     @Override
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
                         if (index < 0) {
                             index = 0;
                         }
+                        mLastItemIndex = mAdapter.lastVisibleItem;
                         loadMoreData(index);
                         mAdapter.setLoaded();
                     }
@@ -183,11 +185,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void removeNewData(int index) {
         Log.v(TAG, "removeNewData index: " + index);
-        for (int i = index; i <= index + 10; i++) {
+        for (int i = index + 1; i <= index + 10; i++) {
             mResponseJSONUtils.removeItemFromList(i);
         }
         mAdapter.notifyDataSetChanged();
-        mCurrentCount = index;
+        mCurrentCount = index + 1;
         Log.v(TAG, "removeNewData size: " + mResponseJSONUtils.getItemListSize());
     }
 
@@ -234,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mAdapter.notifyItemRangeChanged(index, Integer.parseInt(NUM_FETCH_VALUE));
             }
-            removeNewData(mAdapter.lastVisibleItem);
+            removeNewData(mRemoveIndex + 10);
         }
     }
 

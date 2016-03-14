@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     int mCurrentCount = 0;
     int mRemoveIndex = 0;
     int mLastItemIndex = 0;
-    boolean isLoadNew = true;
+    int isLoadDate = -1; //0:new data 1:legacy data
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        isLoadNew = true;
+                        isLoadDate = 0;
                         // add progress item
 //                        if (mResponseJSONUtils.getItemList() != null) {
 //                            mResponseJSONUtils.getItemList().put(mCurrentCount, null);
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        isLoadNew = false;
+                        isLoadDate = 1;
                         int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1;
                         if (index < 0) {
                             index = 0;
@@ -218,25 +218,33 @@ public class MainActivity extends AppCompatActivity {
             mResponseJSONUtils.newItem(Integer.parseInt(id), id, created, sender, note, recipient, amount, currency);
             if (mCurrentCount <= Integer.parseInt(id)) {
                 mCurrentCount = Integer.parseInt(id) + 1;
+                isLoadDate = 0;
+            } else {
+                isLoadDate = 1;
             }
         }
     }
 
     private void refreshView() {
-        if (isLoadNew) {
+        if (isLoadDate == 0) {
             if (mAdapter != null) {
                 mAdapter.notifyItemRangeInserted(mAdapter.lastVisibleItem + 1, Integer.parseInt(NUM_FETCH_VALUE));
             }
             removeLegacyData(mAdapter.lastVisibleItem);
-        } else {
+            isLoadDate = -1;
+        } else if (isLoadDate == 1) {
+            int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1;
+            if (index < 0) {
+                index = 0;
+            }
             if (mAdapter != null) {
-                int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1;
-                if (index < 0) {
-                    index = 0;
-                }
                 mAdapter.notifyItemRangeChanged(index, Integer.parseInt(NUM_FETCH_VALUE));
             }
             removeNewData(mRemoveIndex + 10);
+            mRemoveIndex = index;
+            isLoadDate = -1;
+        } else {
+            Log.v(TAG, "Do not refreshView");
         }
     }
 

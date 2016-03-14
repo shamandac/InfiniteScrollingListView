@@ -2,6 +2,55 @@
 <items version="2" >
 
     <item
+        jar="/home/amanda/.gradle/caches/modules-2/files-2.1/com.mcxiaoke.volley/library/1.0.19/a8f23f65fc1e522ee4a1a697ee569901a46741fa/library-1.0.19.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="a8f23f65fc1e522ee4a1a697ee569901a46741fa">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/library-1.0.19-bf8da221948edaa6d06cfda60dd12ed88aef0aea.jar" />
+    </item>
+    <item
+        jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.2.0/jars/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="6e3578f92f7462d1a935a1d36173e3bdd1234976">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/classes-22647427e0532fab22860442a10ea5d10e2b31df.jar" />
+    </item>
+    <item
+        jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.2.0/jars/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="e5f32fa48a3eb2de0c987025c11b6e3864b634d9">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/classes-623d34f60a384aa8194d4caa8eaf2afae64e0153.jar" />
+    </item>
+    <item
+        jar="/home/amanda/bin/android-sdk-linux/extras/android/m2repository/com/android/support/support-annotations/23.2.0/support-annotations-23.2.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="c5bf571bb10462bd90e5419ade67793f71acbc87">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/support-annotations-23.2.0-6f5c8873dbee08c11aba4367e8461aeea64456cb.jar" />
+    </item>
+    <item
+        jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/support-vector-drawable/23.2.0/jars/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="292a9fa091757208efa65e77eef63088247e51f3">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/classes-5d13272e99eab7632313715a3130a796b4e33ab5.jar" />
+    </item>
+    <item
+        jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/animated-vector-drawable/23.2.0/jars/classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="8c108c22c99e794eff255bb34d2a461200c4cbb0">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/classes-1f7e955183daf9759d942cc08c8cbb873454d44c.jar" />
+    </item>
+    <item
+        jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.2.0/jars/libs/internal_impl-23.2.0.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="6e239441500605809818997dd63b62a947195f8c">
+        <dex dex="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/pre-dexed/debug/internal_impl-23.2.0-e9e1eb9ba53042a3e387d4c6b42470b8e96ddb83.jar" />
+    </item>
+    <item
         jar="/home/amanda/桌面/share/InfiniteScrollingListView/app/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/23.2.0/jars/classes.jar"
         jumboMode="false"
         revision="22.0.1"

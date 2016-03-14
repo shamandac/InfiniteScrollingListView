@@ -1,6 +1,6 @@
 package com.amanda.infinitescrollinglistview;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by amanda on 2016/3/9.
@@ -18,7 +18,7 @@ public class ResponseJSONUtils {
     final static String JSON_KEY_AMOUNT = "amount";
     final static String JSON_KEY_CURRENCY = "currency";
 
-    private ArrayList<ItemInfo> mItemList = new ArrayList<ItemInfo>();
+    private HashMap<Integer, ItemInfo> mItemList = new HashMap<Integer, ItemInfo>();
 
     public class ItemInfo {
         String id;
@@ -30,7 +30,7 @@ public class ResponseJSONUtils {
         String currency;
     }
 
-    public void newItem(String id, String created, String sender, String note, String recipient, String amount, String currency) {
+    public void newItem(int index, String id, String created, String sender, String note, String recipient, String amount, String currency) {
         ItemInfo iteminfo = new ItemInfo();
         iteminfo.id = id;
         iteminfo.created = created;
@@ -40,7 +40,7 @@ public class ResponseJSONUtils {
         iteminfo.amount = amount;
         iteminfo.currency = currency;
         if (mItemList != null) {
-            mItemList.add(iteminfo);
+            mItemList.put(index, iteminfo);
         }
     }
 
@@ -49,14 +49,14 @@ public class ResponseJSONUtils {
     }
 
     public boolean removeItemFromList(int index) {
-        if (index >= 0 && index < getItemListSize()) {
+        if (index >= 0) {
             mItemList.remove(index);
             return true;
         }
         return false;
     }
 
-    public ArrayList<ItemInfo> getItemList() {
+    public HashMap<Integer, ItemInfo> getItemList() {
         return mItemList;
     }
 
@@ -66,6 +66,4 @@ public class ResponseJSONUtils {
         }
         return 0;
     }
-
-
 }

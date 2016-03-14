@@ -6,3 +6,4 @@ package com.amanda.infinitescrollinglistview;
 public interface OnLoadMoreListener {
     void onLoadMore();
 }
+

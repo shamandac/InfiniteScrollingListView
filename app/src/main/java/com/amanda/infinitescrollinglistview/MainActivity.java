@@ -31,12 +31,13 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
-    final String TAG = "MainActivity+Amanda";
+    final String TAG = "infinite_listview";
 
     RequestQueue mRequestQueue;
     JSONArray mJsonRequest = new JSONArray();
 
-    static String NUM_DEFAULT_VALUE = "10";
+    static int NUM_DEFAULT_VALUE = 20;
+    static String NUM_FETCH_VALUE = "10";
 
     JsonArrayRequest mJsonArrayRequest;
     final String mRequestURL = "https://hook.io/syshen/infinite-list/";
@@ -45,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
 
     ProgressDialog mProgressDialog;
     ResponseJSONCodeAdapter mAdapter = null;
+
+    int mCurrentCount = 0;
+    int mRemoveIndex = 0;
+    boolean isLoadNew = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +82,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void startQuery(int startIndex) {
-        String requestURL = mRequestURL + "?startIndex=" + String.valueOf(startIndex) + "&num=" + NUM_DEFAULT_VALUE;
+        startQuery(startIndex, String.valueOf(NUM_DEFAULT_VALUE));
+    }
+
+    private void startQuery(int startIndex, String number) {
+        String requestURL = mRequestURL + "?startIndex=" + String.valueOf(startIndex) + "&num=" + number;
         mJsonArrayRequest = new JsonArrayRequest(Request.Method.POST, requestURL, mJsonRequest, mJSONResponseListener, mErrorListener) {
             public String getBodyContentType() {
                 return mContentType;
@@ -93,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onResponse(final JSONArray response) {
             if (response != null) {
-                Log.v(TAG, "JSONArray: " + response.toString());
+//                Log.v(TAG, "JSONArray: " + response.toString());
                 try {
                     parseJSONResponseAndSetupData(response);
                     refreshView();
@@ -127,12 +135,31 @@ public class MainActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        isLoadNew = true;
                         // add progress item
-                        if (mResponseJSONUtils.getItemList() != null) {
-                            mResponseJSONUtils.getItemList().add(null);
-                            mAdapter.notifyItemInserted(mResponseJSONUtils.getItemListSize() - 1);
+//                        if (mResponseJSONUtils.getItemList() != null) {
+//                            mResponseJSONUtils.getItemList().put(mCurrentCount, null);
+//                            mCurrentCount++;
+//                            mAdapter.notifyItemInserted(mCurrentCount - 1);
+//                        }
+                        loadMoreData(mCurrentCount - 1);
+                        mAdapter.setLoaded();
+                    }
+                }, 3000);
+            }
+        });
+        mAdapter.OnLoadLegacyListener(new OnLoadLegacyListener() {
+            @Override
+            public void onLoadLegacy() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        isLoadNew = false;
+                        int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) - Integer.parseInt(NUM_FETCH_VALUE) + 1;
+                        if (index < 0) {
+                            index = 0;
                         }
-                        loadMoreData(mResponseJSONUtils.getItemListSize() - 1);
+                        loadMoreData(index);
                         mAdapter.setLoaded();
                     }
                 }, 3000);
@@ -141,19 +168,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Append more data into the adapter
-    public void loadMoreData(int totalItemsCount) {
-        startQuery(totalItemsCount);
+    public void loadMoreData(int startIndex) {
+        startQuery(startIndex, NUM_FETCH_VALUE);
+    }
+
+    private void removeLegacyData(int index) {
+        Log.v(TAG, "removeLegacyData index: " + index);
+        mRemoveIndex = index;
+        int count = 0;
+        for (int i = index - Integer.parseInt(NUM_FETCH_VALUE); i >= 0; i--) {
+            mResponseJSONUtils.removeItemFromList(i);
+            count++;
+        }
+        Log.v(TAG, "removeLegacyData size: " + mResponseJSONUtils.getItemListSize());
+    }
+
+    private void removeNewData(int index) {
+        Log.v(TAG, "removeNewData index: " + index);
+        for (int i = index; i >= mRemoveIndex; i--) {
+            mResponseJSONUtils.removeItemFromList(i);
+            mCurrentCount = i;
+        }
+        Log.v(TAG, "removeNewData size: " + mResponseJSONUtils.getItemListSize());
     }
 
     private void parseJSONResponseAndSetupData(JSONArray response) throws JSONException {
-        //  remove progress item
-        if (mResponseJSONUtils.removeItemFromList(mResponseJSONUtils.getItemListSize() - 1)) {
-            mAdapter.notifyItemRemoved(mResponseJSONUtils.getItemListSize());
-        }
+//        //  remove progress item
+//        if (mCurrentCount > NUM_DEFAULT_VALUE && mResponseJSONUtils.removeItemFromList(mCurrentCount - 1)) {
+//            mCurrentCount--;
+//            mAdapter.notifyItemRemoved(mCurrentCount);
+//        }
         int count = response.length();
+        String id = String.valueOf(mAdapter.getItemCount());
         for (int i = 0; i < count; i++) {
             JSONObject resultObject = response.getJSONObject(i);
-            String id = resultObject.getString(ResponseJSONUtils.JSON_KEY_ID);
+            id = resultObject.getString(ResponseJSONUtils.JSON_KEY_ID);
             String created = resultObject.getString(ResponseJSONUtils.JSON_KEY_CREATED);
             JSONObject sourceObject = resultObject.getJSONObject(ResponseJSONUtils.JSON_KEY_SOURCE);
             String sender = sourceObject.getString(ResponseJSONUtils.JSON_KEY_SENDER);
@@ -162,20 +211,31 @@ public class MainActivity extends AppCompatActivity {
             String recipient = destinationObject.getString(ResponseJSONUtils.JSON_KEY_RECIPIENT);
             String amount = destinationObject.getString(ResponseJSONUtils.JSON_KEY_AMOUNT);
             String currency = destinationObject.getString(ResponseJSONUtils.JSON_KEY_CURRENCY);
-            Log.v(TAG, "[parseJSONResponse] id:" + id + ", createdTime: " + created + "" +
-                    ", sender: " + sender + ", note: " + note +
-                    ", recipient: " + recipient + ", amount: " + amount + ", currency: " + currency);
-            mResponseJSONUtils.newItem(id, created, sender, note, recipient, amount, currency);
+//            Log.v(TAG, "[parseJSONResponse] id:" + id + ", createdTime: " + created + "" +
+//                    ", sender: " + sender + ", note: " + note +
+//                    ", recipient: " + recipient + ", amount: " + amount + ", currency: " + currency);
+            mResponseJSONUtils.newItem(Integer.parseInt(id), id, created, sender, note, recipient, amount, currency);
+            if (mCurrentCount <= Integer.parseInt(id)) {
+                mCurrentCount = Integer.parseInt(id) + 1;
+            }
         }
     }
 
     private void refreshView() {
-        int curSize = 0;
-        if (mAdapter != null) {
-            curSize = mAdapter.getItemCount();
-        }
-        if (mAdapter != null) {
-            mAdapter.notifyItemRangeInserted(curSize, mResponseJSONUtils.getItemList().size() - 1);
+        if (isLoadNew) {
+            if (mAdapter != null) {
+                mAdapter.notifyItemRangeInserted(mAdapter.lastVisibleItem + 1, Integer.parseInt(NUM_FETCH_VALUE));
+            }
+            removeLegacyData(mAdapter.lastVisibleItem);
+        } else {
+            if (mAdapter != null) {
+                int index = mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) - Integer.parseInt(NUM_FETCH_VALUE) + 1;
+                if (index < 0) {
+                    index = 0;
+                }
+                mAdapter.notifyItemRangeChanged(index, Integer.parseInt(NUM_FETCH_VALUE));
+            }
+            removeNewData(mAdapter.lastVisibleItem + Integer.parseInt(NUM_FETCH_VALUE));
         }
     }
 
@@ -185,10 +245,10 @@ public class MainActivity extends AppCompatActivity {
         private final int VIEW_ITEM = 0;
         private final int VIEW_PROG = 1;
 
-        private int visibleThreshold = 12;
-        private int lastVisibleItem, totalItemCount;
+        private int firstVisibleItem, lastVisibleItem, totalItemCount;
         private boolean loading;
         private OnLoadMoreListener onLoadMoreListener;
+        private OnLoadLegacyListener onLoadLegacyListener;
 
         public ResponseJSONCodeAdapter(Context context, RecyclerView recyclerView) {
             inflater = LayoutInflater.from(context);
@@ -201,9 +261,17 @@ public class MainActivity extends AppCompatActivity {
                         super.onScrolled(recyclerView, dx, dy);
                         totalItemCount = linearLayoutManager.getItemCount();
                         lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
-                        if (!loading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
+                        firstVisibleItem = linearLayoutManager.findFirstVisibleItemPosition();
+                        Log.v(TAG, "totalItemCount: " + totalItemCount + ", lastVisibleItem: " + lastVisibleItem);
+                        Log.v(TAG, "firstVisibleItem: " + firstVisibleItem + ", mRemoveIndex: " + mRemoveIndex);
+                        if (!loading && lastVisibleItem + 1 >= totalItemCount) {//totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                             if (onLoadMoreListener != null) {
                                 onLoadMoreListener.onLoadMore();
+                            }
+                            loading = true;
+                        } else if (!loading && firstVisibleItem > 0 && firstVisibleItem <= mRemoveIndex - Integer.parseInt(NUM_FETCH_VALUE) + 1) {
+                            if (onLoadLegacyListener != null) {
+                                onLoadLegacyListener.onLoadLegacy();
                             }
                             loading = true;
                         }
@@ -227,8 +295,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+            Log.v(TAG, "viewHolder: " + viewHolder);
             if (viewHolder != null && viewHolder instanceof MyViewHolder) {
                 ResponseJSONUtils.ItemInfo itemInfo = null;
+                Log.v(TAG, "position: " + position + ", getItemCount: " + getItemCount() + ", size: " + mResponseJSONUtils.getItemListSize());
                 if (mResponseJSONUtils != null && position < getItemCount()) {
                     itemInfo = mResponseJSONUtils.getItemFromList(position);
                 }
@@ -263,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getItemViewType(int position) {
             int type = mResponseJSONUtils.getItemFromList(position) != null ? VIEW_ITEM : VIEW_PROG;
+            Log.v(TAG, "position: " + position + ", type: " + type);
             return type;
         }
 
@@ -273,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return mResponseJSONUtils.getItemListSize();
+            return mCurrentCount;
         }
 
         class MyViewHolder extends RecyclerView.ViewHolder {
@@ -312,6 +383,10 @@ public class MainActivity extends AppCompatActivity {
 
         public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
             this.onLoadMoreListener = onLoadMoreListener;
+        }
+
+        public void OnLoadLegacyListener(OnLoadLegacyListener onLoadLegacyListener) {
+            this.onLoadLegacyListener = onLoadLegacyListener;
         }
     }
 
